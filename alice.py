@@ -5,12 +5,14 @@ IF1 = "enp0s8"
 IF2 = "enp0s9"
 IFACE2_SUBNET = "192.168.56"
 IF2_MAC_ADDR = "08:00:27:f2:2c:d3"
+DST_MAC = "11:22:33:44:55:66"
 
 
 def handle_packet(packet: scapy.packet) -> None:
     if IFACE2_SUBNET in packet[scapy.IP].dst:
         packet[scapy.IP].ttl -= 1
         packet.src = IF2_MAC_ADDR
+        packet.dst = DST_MAC
         scapy.sendp(packet, iface=IF2)
 
 
