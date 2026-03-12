@@ -3,21 +3,24 @@ import scapy.all as scapy
 
 IF1 = "enp0s8"
 IF2 = "enp0s9"
-IFACE2_SUBNET = "192.168.56"
-IF2_MAC_ADDR = "08:00:27:f2:2c:d3"
-IP_MAC = {
-    "192.168.56.1": "0A:00:27:00:00:19"
+ROUTING_TABLE = {
+    "192.168.56": IF2
 }
+DEFAULT_GATEWAY = IF2
+
+
+def get_dst_iface(packet: scapy.packet) -> str:
+    for addr in ROUTING_TABLE:
+        if addr in packet[scapy.IP].dst:
+            return ROUTING_TABLE[addr]
+    return DEFAULT_GATEWAY
+
 
 def handle_packet(packet: scapy.packet) -> None:
-    if IFACE2_SUBNET in packet[scapy.IP].dst:
-        packet[scapy.IP].ttl -= 1
-        packet.src = IF2_MAC_ADDR
-        if packet[scapy.IP].dst in IP_MAC:
-            packet.dst = IP_MAC[packet[scapy.IP].dst]
-        else:
-            packet.dst = "ff:ff:ff:ff:ff:ff"
-        scapy.sendp(packet, iface=IF2)
+    DST_IF = get_dst_iface(packet)
+    packet[scapy.IP].ttl -= 1
+    packet.src = scapy.get_if_hwaddr(DST_IF)
+    scapy.sendp(packet, iface=DST_IF)
 
 
 def main() -> None:
