@@ -11,7 +11,7 @@ ROUTING_TABLE = {
 }
 DEFAULT_GATEWAY = NAT_IFACE
 CONNECTIONS = []
-
+RESTRICTED_PORT = 12345
 
 class Connection:
     current_port = 1
@@ -91,6 +91,8 @@ def get_dst_iface(packet: scapy.packet) -> str:
 def handle_packet(packet: scapy.packet) -> None:
     DST_IF = get_dst_iface(packet)
     if packet.sniffed_on == NAT_IFACE and packet[scapy.IP].dst != NAT_IP:
+        return
+    if packet.sniffed_on == NAT_IFACE and scapy.UDP in packet and packet.sport == RESTRICTED_PORT:
         return
     in_connection = False
     for connection in CONNECTIONS:
