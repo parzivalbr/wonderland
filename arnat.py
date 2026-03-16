@@ -1,8 +1,8 @@
 import scapy.all as scapy
+from firewall import check_packet_FW
 
-
-HOME_IFACE = "enp0s8"
-NAT_IFACE = "enp0s9"
+HOME_IFACE = "enp0s9"
+NAT_IFACE = "enp0s8"
 NAT_IP = scapy.get_if_addr(NAT_IFACE)
 NAT_MAC = scapy.get_if_hwaddr(NAT_IFACE)
 HOME_IF_MAC = scapy.get_if_hwaddr(HOME_IFACE)
@@ -11,7 +11,7 @@ ROUTING_TABLE = {
 }
 DEFAULT_GATEWAY = NAT_IFACE
 CONNECTIONS = []
-RESTRICTED_PORT = 12345
+
 
 class Connection:
     current_port = 1
@@ -92,7 +92,7 @@ def handle_packet(packet: scapy.packet) -> None:
     DST_IF = get_dst_iface(packet)
     if packet.sniffed_on == NAT_IFACE and packet[scapy.IP].dst != NAT_IP:
         return
-    if packet.sniffed_on == NAT_IFACE and scapy.UDP in packet and packet.sport == RESTRICTED_PORT:
+    if check_packet_FW(packet):
         return
     in_connection = False
     for connection in CONNECTIONS:
